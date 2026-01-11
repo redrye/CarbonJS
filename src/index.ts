@@ -640,4 +640,4 @@ class Carbon {
   }
 }
 
-export default Carbon
+export = Carbon;
