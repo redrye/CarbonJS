@@ -1,24 +1,19 @@
-import * as Carbon from "./index";
 import * as CONSTANTS from "./constants";
+import * as Carbon from "./index";
 
-export const padStart = (str: string | number, length: number, pad: string) => {
-  str = `${str}`;
+export const padStart = (str: string | number, length: number, pad: string): string =>
+    String(str).padStart(length, pad);
 
-  if (!str || str.length >= length) return str;
+export const padZoneStr = (minutesOffset: number): string => {
+    const absMinutes = Math.abs(minutesOffset);
+    const hours = Math.floor(absMinutes / 60);
+    const minutes = absMinutes % 60;
+    const sign = minutesOffset <= 0 ? "+" : "-";
 
-  return `${Array((length + 1) - str.length).join(pad)}${str}`;
+    return `${sign}${padStart(hours, 2, "0")}:${padStart(minutes, 2, "0")}`;
 };
 
-export const padZoneStr = (negMinutes: number) => {
-  const minutes = Math.abs(negMinutes);
-  const hourOffset = Math.floor(minutes / 60);
-  const minuteOffset = minutes % 60;
-
-  return `${negMinutes <= 0 ? "+" : "-"}${padStart(hourOffset, 2, "0")}:${padStart(minuteOffset, 2, "0")}`;
-};
-
-export const prettyUnit = (unit: string = "") => {
-  const special: any = {
+const UNIT_MAP: Record<string, string> = {
     y: CONSTANTS.YEAR,
     M: CONSTANTS.MONTH,
     w: CONSTANTS.WEEK,
@@ -27,34 +22,30 @@ export const prettyUnit = (unit: string = "") => {
     m: CONSTANTS.MINUTE,
     s: CONSTANTS.SECOND,
     ms: CONSTANTS.MILLISECOND,
-  };
-
-  return special[unit] || unit.toLowerCase().replace(/s$/, "");
 };
 
-export const monthDiff = (a: Carbon, b: Carbon) => {
-  // function from moment.js in order to keep the same result
-  const wholeMonthDiff = ((b.year() - a.year()) * 12) + (b.month() - a.month());
-  const anchor = a.add(wholeMonthDiff, "months").valueOf();
-  const c = (b.valueOf() - anchor) < 0;
-  const anchor2 = a.add(wholeMonthDiff + (c ? -1 : 1), "months").valueOf();
+export const prettyUnit = (unit: string = ""): string =>
+    UNIT_MAP[unit] ?? unit.toLowerCase().replace(/s$/, "");
 
-  return -(wholeMonthDiff +
-    ((b.valueOf() - anchor) / (
-      c ?
-        (anchor - anchor2) :
-        (anchor2 - anchor))
-    )
-  );
+export const monthDiff = (a: any, b: any): number => {
+    const wholeMonthDiff = ((b.year() - a.year()) * 12) + (b.month() - a.month());
+    const anchor = a.add(wholeMonthDiff, "months").valueOf();
+    const isBBeforeAnchor = (b.valueOf() - anchor) < 0;
+    const anchorNext = a.add(wholeMonthDiff + (isBBeforeAnchor ? -1 : 1), "months").valueOf();
+    const fractionalDiff = (b.valueOf() - anchor) / Math.abs(anchor - anchorNext);
+
+    return -(wholeMonthDiff + fractionalDiff);
 };
 
-export const getShort = (arr: any, index: number, full: any[], length: number) =>
-  (arr && arr[index]) || full[index].substr(0, length);
+export const getShort = (arr: string[] | undefined, index: number, full: string[], length: number): string =>
+    arr?.[index] ?? full[index].substring(0, length);
 
-export const findShortIndex = (arr: any, short: string, full: any[]) =>
-  (arr && arr.indexOf(short)) || full.findIndex((f) => f.indexOf(short) === 0);
+export const findShortIndex = (arr: string[] | undefined, short: string, full: string[]): number => {
+    const index = arr?.indexOf(short) ?? -1;
+    return index !== -1 ? index : full.findIndex((f) => f.startsWith(short));
+};
 
-export const absFloor = (num: number) => num < 0 ? (Math.ceil(num) || 0) : Math.floor(num);
+export const absFloor = (num: number): number => (num < 0 ? Math.ceil(num) : Math.floor(num)) || 0;
 
-// better minifying
-export const newDate = (...args: any[]): Date => new (Date as any)(...args);
+// @ts-ignore
+export const newDate = (...args: any[]): Date => new Date(...args);
