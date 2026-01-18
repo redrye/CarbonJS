@@ -9,4 +9,8 @@ class Carbon {
     public static now() {
         return Carbon.parse(new Date())
     }
+
+    public format(format: string) {
+        return this._date.toLocaleString(format);
+    }
 }
